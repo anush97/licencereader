@@ -32,6 +32,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
     if (err) {
       res.status(500).send(err);
     } else {
+      console.log('Image uploaded to S3 successfully'); 
       // Call the Python script to analyze the image
       const python = spawn('python', ['analyze_id.py', 'us-east-1', bucketName, data.Key]);
 
