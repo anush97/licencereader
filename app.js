@@ -5,6 +5,7 @@ const { spawn } = require('child_process');
 const AWS = require('aws-sdk');
 
 const app = express();
+app.use(express.static('public')); // Serve static files from the public directory
 const upload = multer({ dest: 'uploads/' });
 
 // Configure the AWS SDK
@@ -52,7 +53,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
         const extractedData = JSON.parse(output);
 
         // Return the output to the client
-        res.send(output);
+        res.json(extractedData); // Send the JSON data to the client
       });
     }
   });
