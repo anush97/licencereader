@@ -1,5 +1,13 @@
-parameters:
-  - key: AWS_ACCESS_KEY_ID
-    value: AKIAXGLV4RQWALRKH6MT
-  - key: AWS_SECRET_ACCESS_KEY
-    value: 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
+services:
+  - type: web
+    name: driver-licence-reader
+    env: node
+    buildCommand: npm install
+    startCommand: node app.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AWS_ACCESS_KEY_ID
+        value: AKIAXGLV4RQWALRKH6MT
+      - key: AWS_SECRET_ACCESS_KEY
+        value: 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
