@@ -14,12 +14,11 @@ AWS.config.update({
 });
 
 // Define an endpoint to upload an image
-app.post('/upload', upload.single('image'), (req, res) => {
+app.post('/upload', upload.single('image'), async (req, res) => {
   const { path } = req.file;
   const s3 = new AWS.S3();
   const bucketName = 'readdl';
 
-  // Upload the image to the S3 bucket
   const fileContent = fs.readFileSync(path);
   const params = {
     Bucket: bucketName,
@@ -28,37 +27,35 @@ app.post('/upload', upload.single('image'), (req, res) => {
     ContentType: req.file.mimetype,
   };
 
-  s3.upload(params, (err, data) => {
-    if (err) {
-      res.status(500).send(err);
-    } else {
-      console.log('Image uploaded to S3 successfully'); 
-      // Call the Python script to analyze the image
-      const python = spawn('python', ['analyze_id.py', 'us-east-1', bucketName, data.Key]);
+  try {
+    const data = await s3.upload(params).promise();
+    console.log('Image uploaded to S3 successfully');
 
-      let output = '';
-      python.stdout.on('data', (data) => {
-        output += data.toString();
-      });
+    const python = spawn('python', ['analyze_id.py', 'us-east-1', bucketName, data.Key]);
 
-      python.stderr.on('data', (data) => {
-        console.error(`stderr: ${data}`);
-      });
+    let output = '';
+    python.stdout.on('data', (data) => {
+      output += data.toString();
+    });
 
-      python.on('close', async (code) => {
-        console.log(`child process exited with code ${code}`);
-        // Delete the local file
-        fs.unlinkSync(path);
+    python.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+    });
 
-        // Parse the JSON output from the Python script
-        const extractedData = JSON.parse(output);
+    python.on('close', (code) => {
+      console.log(`child process exited with code ${code}`);
+      fs.unlinkSync(path);
 
-        // Return the output to the client
-        res.json(extractedData); // Send the JSON data to the client
-      });
-    }
-  });
+      const extractedData = JSON.parse(output);
+
+      res.send({ extractedData });
+    });
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).send(err);
+  }
 });
+
 
 // Start the server
 const port = process.env.PORT || 3000;
