@@ -34,7 +34,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
     } else {
       // Call the Python script to analyze the image
       const python = spawn('python', ['analyze_id.py', 'us-east-1', bucketName, data.Key]);
-
+      console.log('Image uploaded to S3 successfully');
       let output = '';
       python.stdout.on('data', (data) => {
         output += data.toString();
@@ -51,9 +51,12 @@ app.post('/upload', upload.single('image'), (req, res) => {
 
         // Parse the JSON output from the Python script
         const extractedData = JSON.parse(output);
-
+        res.send({ extractedData });
         // Return the output to the client
         res.json(extractedData); // Send the JSON data to the client
+
+        
+
       });
     }
   });
